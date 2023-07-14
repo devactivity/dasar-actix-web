@@ -10,3 +10,5 @@ actix-web = "4.3.1"
 reqwest = "0.11.18"
 utoipa = { version = "3.3.0", features = ["actix_extras"] }
 utoipa-swagger-ui = { version = "3.1.3", features = ["actix-web"] }
+sqlx = { version = "0.7.0", features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate"] }
+uuid = { version = "1.4.0", features = ["v4", "fast-rng", "macro-diagnostics"] }

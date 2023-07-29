@@ -1,24 +1,24 @@
-use std::net::TcpListener;
-use aw_api::server::start;
+use sqlx::PgPool;
+use aw_api::settings::get_app_mode;
+use aw_api::server::{Application, get_connection_pool};
 
 pub struct MyApp {
-    pub address: String
+    pub address: String,
+    pub db_pool: PgPool
 }
 
-
 async fn start_server() -> MyApp {
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .expect("Failed to bind random port");
+    let configuration = get_app_mode().expect("Failed to read configuration.");
 
-    let port = listener.local_addr().unwrap().port();
-    let address = format!("http://127.0.0.1:{}", port);
+    let app = Application::build_app(configuration.clone())
+        .await
+        .expect("Failed to build application");
 
-    let server = start(listener)
-        .expect("Failed to bind address");
+    let address = format!("http://127.0.0.1:8000");
 
-    let _ = actix_web::rt::spawn(server);
+    let _ = actix_web::rt::spawn(app.run_app());
 
-    MyApp { address }
+    MyApp { address,db_pool: get_connection_pool(&configuration.database) }
 }
 
 #[actix_web::test]

@@ -14,7 +14,17 @@ sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "macros", "postg
 uuid = { version = "1.4.0", features = ["v4", "fast-rng", "macro-diagnostics"] }
 config = "0.13.3"
 serde = { version = "1.0.175", features = ["derive"] }
+futures = "0.3.28"
+regex = "1.9.3"
+validator = { version = "0.16.1", features = ["derive", "validator_derive"] }
+chrono = { version = "0.4.26", features = ["serde"] }
+lazy_static = "1.4.0"
+validator_derive = "0.16.0"
+futures-core = "0.3.28"
 thiserror = "1.0.48"
 serde_json = "1.0.105"
-validator = { version = "0.16.1", features = ["derive", "validator_derive"] }
+actix = "0.13.1"
 argon2 = "0.5.2"
+rand = "0.8.5"
+sluggify = "0.1.0"
+blob-uuid = "0.5.0"

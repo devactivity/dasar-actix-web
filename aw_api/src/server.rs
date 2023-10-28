@@ -1,6 +1,3 @@
-use crate::routes::__path_ping;
-use crate::routes::ping;
-
 use actix_web::{dev::Server, web, App, HttpServer};
 use std::net::TcpListener;
 use utoipa::OpenApi;
@@ -9,6 +6,32 @@ use utoipa_swagger_ui::SwaggerUi;
 use sqlx::{PgPool, postgres::PgPoolOptions};
 
 use crate::settings::{Settings, DatabaseSettings};
+
+// Route handlers
+use crate::routes::ping;
+use crate::routes::{register, login, update, delete}; // User handlers
+use crate::routes::{get_profile, follow_profile, unfollow_profile}; // Profile handlers
+use crate::routes::get_tags; // Tag handlers
+use crate::routes::{
+    get_articles, create_article, get_articles_feed, get_articles_by_slug, update_articles_by_slug, delete_articles_by_slug,
+    favorite_articles_by_slug, unfavorite_articles_by_slug,
+    get_articles_comments, add_articles_comments, delete_articles_comments
+}; // Article handlers
+
+// OpenAPI Schema
+use crate::routes::{
+    __path_ping,
+    __path_register, __path_login, __path_update, __path_delete,
+    __path_get_profile, __path_follow_profile, __path_unfollow_profile,
+    __path_get_tags,
+    __path_get_articles, __path_create_article, __path_get_articles_feed, __path_get_articles_by_slug, __path_update_articles_by_slug,
+    __path_delete_articles_by_slug, __path_favorite_articles_by_slug, __path_unfavorite_articles_by_slug,
+    __path_get_articles_comments, __path_add_articles_comments, __path_delete_articles_comments
+}; // Path
+use crate::schemas::{UserRegister, UserLogin, UserUpdate, UserDelete};
+use crate::schemas::{Profile, ProfileResponse, ProfileResponseInner, ProfileFollow};
+use crate::schemas::{ArticleTag, TagsResponse};
+use crate::schemas::{CreateArticle, ArticleResponseInner, ArticleListResponse, UpdateArticleOuter, UpdateArticle, AddComment};
 
 pub fn get_connection_pool(
     configuration: &DatabaseSettings
@@ -50,13 +73,33 @@ pub fn start(
 ) -> Result<Server, std::io::Error> {
     #[derive(OpenApi)]
     #[openapi(
-        paths(ping),
+        paths(
+            ping,
+            // user paths
+            register, login, update, delete,
+            // Profile
+            get_profile, follow_profile, unfollow_profile,
+            // Tag
+            get_tags,
+            // Articles
+            get_articles, create_article, get_articles_feed, get_articles_by_slug, update_articles_by_slug, delete_articles_by_slug,
+            favorite_articles_by_slug, unfavorite_articles_by_slug,
+            get_articles_comments, add_articles_comments, delete_articles_comments
+        ),
         info(
             title = "Actix-web RESTful",
             version = "0.1.0",
             description = "My First Rust Backend with _`Actix-web`_",
             license(name = "MIT", url = "github.com"),
             contact(name = "Dev Activity", url = "github.com", email = "dev@activity.com")
+        ),
+        components(
+            schemas(
+                UserRegister, UserLogin, UserUpdate, UserDelete,
+                Profile, ProfileResponse, ProfileResponseInner, ProfileFollow,
+                ArticleTag, TagsResponse, CreateArticle, ArticleResponseInner, ArticleListResponse, UpdateArticleOuter,
+                UpdateArticle, AddComment
+            ),
         )
     )]
     struct ApiDoc;
@@ -69,7 +112,81 @@ pub fn start(
                 SwaggerUi::new("/apidoc/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
             .app_data(db_pool_data.clone())
+
+            // Ping route ---------------------------------------------------------------
             .route("/ping", web::get().to(ping))
+
+            // Main routes ---------------------------------------------------------------
+            .service(
+                web::scope("/api/v1")
+
+                            // User routes ---------------------------------------------------------------
+                            .service(
+                                web::resource("users/register")
+                                    .route(web::post().to(register))
+                            )
+                            .service(
+                                web::resource("users/login")
+                                    .route(web::post().to(login))
+                            )
+                            .service(
+                                web::resource("users/update")
+                                    // .route(web::get().to(users::get_current))
+                                    .route(web::put().to(update))
+                            )
+                            .service(
+                                web::resource("users/delete")
+                                    .route(web::delete().to(delete))
+                            )
+
+                            // Profile routes ---------------------------------------------------------------
+                            .service(
+                                web::resource("profiles/{username}")
+                                    .route(web::get().to(get_profile))
+                            )
+                            .service(
+                                web::resource("profiles/{username}/follow")
+                                    .route(web::post().to(follow_profile))
+                                    .route(web::delete().to(unfollow_profile))
+                            )
+
+                            // Article routes ---------------------------------------------------------------
+                            .service(
+                                web::resource("articles")
+                                    .route(web::get().to(get_articles))
+                            )
+                            .service(
+                                web::resource("articles/{username}")
+                                    .route(web::post().to(create_article))
+                            )
+                            .service(
+                                web::resource("articles/feed/{username}")
+                                    .route(web::get().to(get_articles_feed))
+                            )
+                            .service(
+                                web::resource("articles/data/{slug}")
+                                    .route(web::get().to(get_articles_by_slug))
+                                    .route(web::put().to(update_articles_by_slug))
+                                    .route(web::delete().to(delete_articles_by_slug))
+                            )
+                            .service(
+                                web::resource("articles/favorite/{slug}")
+                                    .route(web::post().to(favorite_articles_by_slug))
+                                    .route(web::delete().to(unfavorite_articles_by_slug))
+                            )
+                            .service(
+                                web::resource("articles/comments/{slug}")
+                                    .route(web::get().to(get_articles_comments))
+                                    .route(web::post().to(add_articles_comments))
+                                    .route(web::post().to(delete_articles_comments))
+                            )
+
+                            // Tags routes ---------------------------------------------------------------
+                            .service(
+                                web::resource("tags")
+                                    .route(web::get().to(get_tags))
+                            )
+            )
     })
     .listen(listener)?
     .run();

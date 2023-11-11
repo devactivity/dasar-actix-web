@@ -7,6 +7,12 @@ use std::env;
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
+    pub test_client: TestClientSettings
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct  TestClientSettings {
+    pub base_url: String
 }
 
 #[derive(Debug, Clone, Deserialize)]

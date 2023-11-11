@@ -65,6 +65,10 @@ impl Application {
     pub async fn run_app(self) -> Result<(), std::io::Error> {
         self.server.await
     }
+
+    pub fn port(&self) -> u16 {
+        self.port
+    }
 }
 
 pub fn start(

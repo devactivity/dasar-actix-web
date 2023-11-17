@@ -8,7 +8,7 @@ use sqlx::{PgPool, postgres::PgPoolOptions};
 use crate::settings::{Settings, DatabaseSettings};
 
 // Route handlers
-use crate::routes::ping;
+use crate::routes::{ping, third_party_api};
 use crate::routes::{register, login, update, delete}; // User handlers
 use crate::routes::{get_profile, follow_profile, unfollow_profile}; // Profile handlers
 use crate::routes::get_tags; // Tag handlers
@@ -119,6 +119,7 @@ pub fn start(
 
             // Ping route ---------------------------------------------------------------
             .route("/ping", web::get().to(ping))
+            .route("/third_party_api", web::get().to(third_party_api))
 
             // Main routes ---------------------------------------------------------------
             .service(

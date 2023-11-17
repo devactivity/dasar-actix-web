@@ -80,22 +80,33 @@ pub async fn get_profile(
 }
 
 /// Follow a User
+///
+/// Input an email of someone you want to follow
 #[utoipa::path(
     post,
     path = "/api/v1/profiles/{username}/follow",
     tag = "profiles",
     responses(
         (status = 201, description = "Success", body = ProfileResponse),
-        (status = 400, description = "Bad request")
+        (status = 400, description = "Bad request"),
+        (status = 500, description = "Internal server error")
     ),
     params(
-        ("username" = String, Path, description = "Username of a user you want to follow"),
-    )
+        ("username" = String, Path, description = "Your username"),
+    ),
+    request_body = ProfileFollow
 )]
 pub async fn follow_profile(
-    (form, pool): (web::Path<Profile>, web::Data<PgPool>)
+    (form, following_data, pool): (web::Path<Profile>, web::Json<ProfileFollow>, web::Data<PgPool>)
 ) -> Result<HttpResponse, AppError> {
     let user_info = form.into_inner();
+    let following_data = following_data.into_inner();
+
+    // Validate the user input
+    let following_data_validation_result = following_data.validate();
+    if let Err(validation_errors) = following_data_validation_result {
+        return Ok(validation_errors_response(&validation_errors));
+    }
 
     // Validate the user input
     let validation_result = user_info.validate();
@@ -120,9 +131,9 @@ pub async fn follow_profile(
 
     // Fetch the target user data
     let target_user = sqlx::query_as::<_, (Uuid, String, Option<String>)>(
-        "SELECT id, username, bio FROM users WHERE username = $1 LIMIT 1"
+        "SELECT id, username, bio FROM users WHERE email = $1 LIMIT 1"
     )
-    .bind(&user_info.username)
+    .bind(&following_data.email)
     .fetch_optional(pool)
     .await?;
 

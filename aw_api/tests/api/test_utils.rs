@@ -12,6 +12,47 @@ pub struct TestApp {
     pub test_server: MockServer
 }
 
+impl TestApp {
+    pub async fn payload_for_get(&self, endpoint: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .get(&format!("{}/{}", &self.address, endpoint.to_string()))
+            .header("Content-Type", "application/json") // Update the content type
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn payload_for_post(&self, body: String, endpoint: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .post(&format!("{}/{}", &self.address, endpoint.to_string()))
+            .header("Content-Type", "application/json") // Update the content type
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn payload_for_put(&self, body: String, endpoint: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .put(&format!("{}/{}", &self.address, endpoint.to_string()))
+            .header("Content-Type", "application/json") // Update the content type
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn payload_for_delete(&self, body: String, endpoint: &str) -> reqwest::Response {
+        reqwest::Client::new()
+            .delete(&format!("{}/{}", &self.address, endpoint.to_string()))
+            .header("Content-Type", "application/json") // Update the content type
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+}
+
 pub async fn start_test_server() -> TestApp {
     let test_server = MockServer::start().await;
     let current_time = Local::now();

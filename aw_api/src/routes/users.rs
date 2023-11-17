@@ -112,7 +112,7 @@ pub async fn login(
                 let success_response = serde_json::json!({
                     "message": "Authentication successful",
                 });
-                Ok(HttpResponse::Ok().json(success_response))
+                Ok(HttpResponse::Ok().status(StatusCode::CREATED).json(success_response))
             } else {
                 // Passwords do not match; authentication failed
                 let error_response = serde_json::json!({
@@ -138,6 +138,7 @@ pub async fn login(
     tag = "users",
     responses(
         (status = 201, description = "Success", body = UserUpdate),
+        (status = 404, description = "Not Found"),
         (status = 400, description = "Bad request")
     ),
     request_body = UserUpdate
@@ -166,12 +167,19 @@ pub async fn update(
     .bind(&update_user.username);
 
     match query.execute(pool).await {
-        Ok(_) => {
-            let success_response = serde_json::json!({
-                "message": "Record updated successfully",
-            });
-
-            Ok(HttpResponse::Ok().json(success_response))
+        Ok(res) => {
+            if res.rows_affected() > 0 {
+                let success_response = serde_json::json!({
+                    "message": "Record updated successfully",
+                });
+                Ok(HttpResponse::Ok().status(StatusCode::CREATED).json(success_response))
+            } else {
+                // No rows were affected, indicating the username was not found.
+                let not_found_response = serde_json::json!({
+                    "message": "Record not found for the provided username",
+                });
+                Ok(HttpResponse::NotFound().json(not_found_response))
+            }
         }
         Err(err) => {
             let custom_err: AppError = err.into();
